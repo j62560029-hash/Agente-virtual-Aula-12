@@ -10,21 +10,17 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-def inicializar_cliente_openrouter() -> Optional[OpenAI]:
-    api_key = os.getenv("OPENROUTER_API_KEY")
-    if not api_key:
-        st.error("Chave de API não configurada!")
+def inicializar_ia() -> Optional[OpenAI]:
+    token = os.getenv("GITHUB_TOKEN")
+    if not token:
+        st.error("Token de acesso não configurado!")
         return None
     return OpenAI(
-        base_url="https://openrouter.ai/api/v1",
-        api_key=api_key,
-        default_headers={
-            "HTTP-Referer": "https://render.com/",
-            "X-Title": "ROA Veículos"
-        }
+        base_url="https://models.inference.ai.azure.com",
+        api_key=token
     )
 
-cliente = inicializar_cliente_openrouter()
+cliente = inicializar_ia()
 
 DADOS_EMPRESA: Dict = {
     "nome": "ROA Veículos",
@@ -34,21 +30,22 @@ DADOS_EMPRESA: Dict = {
 }
 
 CATALOGO_VEICULOS: List[Dict] = [
-    {"modelo": "HB20 0km", "preco": "R$ 79.990,00", "destaque": "Entrega imediata, até 60x"},
+    {"modelo": "HB20 0km", "preco": "R$ 79.990,00", "destaque": "Entrega imediata, até 60x sem entrada"},
     {"modelo": "Corolla Usado", "preco": "R$ 95.900,00", "destaque": "Único dono, garantia de 1 ano"},
     {"modelo": "Compass 4x4", "preco": "R$ 149.990,00", "destaque": "Versão completa, pouca km"},
     {"modelo": "Fiorino Trabalho", "preco": "R$ 62.500,00", "destaque": "Pronto para uso comercial"}
 ]
 
 CONTEXTO_SISTEMA = f"""
-Você é o atendente virtual da {DADOS_EMPRESA['nome']}, especializado em venda de veículos.
-- Seja educado e direto
+Você é o atendente virtual oficial da {DADOS_EMPRESA['nome']}, especializado em venda de veículos.
+- Seja educado, direto e use linguagem simples.
 - Use apenas esses dados: {CATALOGO_VEICULOS}
 - Contato: {DADOS_EMPRESA['contato']}
-- Não invente informações!
+- NÃO invente dados, preços ou informações!
+- Responda de forma natural, como um atendente real.
 """
 
-def exibir_menu_lateral() -> None:
+def menu_lateral():
     st.sidebar.title(f"🚘 {DADOS_EMPRESA['nome']}")
     st.sidebar.subheader("Sobre nós")
     st.sidebar.write(DADOS_EMPRESA["missao"])
@@ -59,12 +56,12 @@ def exibir_menu_lateral() -> None:
     for v in CATALOGO_VEICULOS:
         st.sidebar.markdown(f"**{v['modelo']}** — {v['preco']}\n✅ {v['destaque']}")
 
-def exibir_tela_inicial() -> None:
+def tela_inicial():
     st.title("🚗 Atendimento Virtual ROA Veículos")
-    st.subheader("Escolha seu veículo com a ajuda do nosso assistente!")
-    st.write("Pergunte sobre preços, condições ou agende uma visita.")
+    st.subheader("Seu parceiro na hora de escolher o veículo ideal!")
+    st.write("Converse com nosso assistente de IA para tirar dúvidas, ver condições ou agendar uma visita.")
 
-def gerenciar_conversa() -> None:
+def conversa():
     if "mensagens" not in st.session_state:
         st.session_state.mensagens = [{"role": "system", "content": CONTEXTO_SISTEMA}]
     
@@ -82,10 +79,11 @@ def gerenciar_conversa() -> None:
             with st.chat_message("assistant"):
                 resposta_texto = ""
                 resposta = cliente.chat.completions.create(
-                    model="meta-llama/llama-3.1-8b-instruct:free",
+                    model="meta-llama/Llama-3.1-8B-Instruct",
                     messages=st.session_state.mensagens,
                     stream=True,
-                    temperature=0.7
+                    temperature=0.7,
+                    max_tokens=1000
                 )
                 espaco = st.empty()
                 for parte in resposta:
@@ -94,9 +92,10 @@ def gerenciar_conversa() -> None:
                         espaco.markdown(resposta_texto)
                 st.session_state.mensagens.append({"role": "assistant", "content": resposta_texto})
         except Exception as e:
-            st.error(f"Erro: {str(e)}. Tente novamente mais tarde.")
+            st.error(f"Erro na IA: {str(e)}. Tente novamente.")
 
 if __name__ == "__main__":
-    exibir_menu_lateral()
-    exibir_tela_inicial()
-    gerenciar_conversa()
+    menu_lateral()
+    tela_inicial()
+    conversa()
+    
