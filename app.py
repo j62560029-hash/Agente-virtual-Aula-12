@@ -1,73 +1,52 @@
-# CORREÇÃO DE CODIFICAÇÃO — COLOQUEI AQUI NO INÍCIO
-import sys
-sys.stdout.reconfigure(encoding='utf-8')
-
-import streamlit as st
 import os
+import sys
+import streamlit as st
 from openai import OpenAI
-from dotenv import load_dotenv
 
-load_dotenv()
+# ✅ ISSO AQUI ACABA COM O ERRO DE ACENTO PARA SEMPRE
+sys.stdout.reconfigure(encoding='utf-8')
+sys.stderr.reconfigure(encoding='utf-8')
 
-st.set_page_config(
-    page_title="Agente de Venda de Veiculos",  # Sem acento no título da página
-    page_icon="🚗",
-    layout="centered"
-)
+# Configuração da página
+st.set_page_config(page_title="Agente de Venda de Veículos", page_icon="🚗", layout="centered")
 
-def inicializar_ia():
-    api_key = os.getenv("OPENROUTER_API_KEY")
-    
-    if not api_key:
-        st.error("⚠️ Chave de API nao encontrada! Verifique as variáveis do Render.")
-        st.stop()
-
-    cliente = OpenAI(
-        base_url="https://openrouter.ai/api/v1",
-        api_key=api_key,
-        default_headers={
-            "HTTP-Referer": "https://aula-12.onrender.com",
-            "X-Title": "Agente Venda Veiculos",
-            "Content-Type": "application/json; charset=utf-8"
-        }
-    )
-    return cliente
-
-try:
-    cliente_ia = inicializar_ia()
-except Exception as e:
-    st.error(f"❌ Erro ao conectar: {str(e)}")
+# Pega a chave direto das variáveis do Render
+API_KEY = os.getenv("OPENROUTER_API_KEY")
+if not API_KEY:
+    st.error("Chave da API não encontrada!")
     st.stop()
 
+# Conecta no OpenRouter
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=API_KEY
+)
+
+# Interface
 st.title("🚗 Agente Virtual de Venda de Veículos")
 st.write("Converse com nosso assistente para saber mais sobre veículos, condições e negociação!")
 
-if "historico" not in st.session_state:
-    st.session_state.historico = [
-        {"role": "system", "content": "Voce é um assistente especializado em venda de veiculos. Responda sempre em portugues do Brasil, de forma clara, educada e objetiva, focando em ajudar com duvidas sobre carros, precos, condicoes de pagamento e negociacao."}
+# Histórico de conversa
+if "chat" not in st.session_state:
+    st.session_state.chat = [
+        {"role": "system", "content": "Você é um atendente de loja de veículos. Responda SEMPRE em português do Brasil, com acentos e tudo certo, de forma simples e educada."}
     ]
 
-for mensagem in st.session_state.historico[1:]:
-    with st.chat_message(mensagem["role"]):
-        st.markdown(mensagem["content"])
+# Mostra as mensagens
+for mensagem in st.session_state.chat[1:]:
+    st.chat_message(mensagem["role"]).write(mensagem["content"])
 
-pergunta = st.chat_input("Digite sua pergunta sobre veiculos...")
-
+# Entrada do usuário
+pergunta = st.chat_input("Digite sua pergunta sobre veículos...")
 if pergunta:
-    st.session_state.historico.append({"role": "user", "content": pergunta})
-    with st.chat_message("user"):
-        st.markdown(pergunta)
+    st.session_state.chat.append({"role": "user", "content": pergunta})
+    st.chat_message("user").write(pergunta)
 
-    with st.chat_message("assistant"):
-        with st.spinner("Processando..."):
-            resposta = cliente_ia.chat.completions.create(
-                model="meta-llama/llama-3-8b-instruct",
-                messages=st.session_state.historico,
-                temperature=0.7,
-                max_tokens=1000
-            )
-            texto_resposta = resposta.choices[0].message.content
-            st.markdown(texto_resposta)
-    
-    st.session_state.historico.append({"role": "assistant", "content": texto_resposta})
+    resposta = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=st.session_state.chat
+    )
+    texto = resposta.choices[0].message.content
+    st.session_state.chat.append({"role": "assistant", "content": texto})
+    st.chat_message("assistant").write(texto)
     
