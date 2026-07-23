@@ -1,20 +1,15 @@
-# Agente de Venda de Veículos - ROA Veículos
-Projeto desenvolvido para o curso do Senai, usando **Inteligência Artificial Generativa real**.
+# Agente Virtual de Venda de Veículos
 
-## Tecnologias
-- Python 3.12
+Projeto desenvolvido para atividade do curso no Senai.
+
+## Tecnologias usadas
+- Python 3
 - Streamlit
-- Modelo Llama 3.1 via GitHub Models (IA real)
-- GitHub + Render
+- API OpenRouter
 
-## Funcionalidades
-- Interface moderna e identidade visual
-- Atendimento com IA generativa (não apenas respostas fixas)
-- Catálogo de veículos e regras comerciais
-- Respostas naturais e alinhadas às vendas
+## Como usar
+1. Digite sua pergunta sobre veículos, preços ou negociação
+2. O assistente responde em português do Brasil
 
-## Deploy no Render
-- Build Command: `pip install -r requirements.txt`
-- Start Command: `streamlit run app.py --server.port $PORT --server.address 0.0.0.0`
-- Variável: `GITHUB_TOKEN` com o token do seu GitHub
-- 
+## Acesso
+Aplicação hospedada no Render.
